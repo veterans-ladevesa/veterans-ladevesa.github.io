@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verterans de la Devesa · Admin</title>
+  <meta name="description" content="Admin area for Verterans de la Devesa." />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="admin-page-body">
+  <header class="admin-topbar">
+    <div class="container admin-topbar-inner">
+      <div>
+        <p class="eyebrow dark">Admin area</p>
+        <h1>Manage club data</h1>
+      </div>
+      <div class="cta-row">
+        <a href="index.html" class="btn secondary">Back to main page</a>
+        <span class="admin-status" id="auth-status">Not signed in</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="section-head stacked-mobile">
+        <div>
+          <h2>Admin login</h2>
+          <p class="muted">Only signed-in admins can add or delete players and match records.</p>
+        </div>
+      </div>
+
+      <div class="admin-login-grid">
+        <div>
+          <label for="admin-email">Admin email</label>
+          <input id="admin-email" type="email" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label for="admin-password">Password</label>
+          <input id="admin-password" type="password" placeholder="Password" />
+        </div>
+      </div>
+      <div class="cta-row admin-actions">
+        <button id="login-btn" class="btn primary">Log in</button>
+        <button id="logout-btn" class="btn secondary">Log out</button>
+      </div>
+      <div id="admin-message" class="result-box muted">Sign in to manage players and match entries.</div>
+    </section>
+
+    <section id="admin-panels" class="admin-panels hidden">
+      <div class="grid-3">
+        <form id="player-form" class="card inset-card">
+          <h3>Add player</h3>
+          <label>Name</label>
+          <input name="name" required />
+          <label>Position</label>
+          <select name="position" required>
+            <option value="GK">GK</option>
+            <option value="CB">CB</option>
+            <option value="LB">LB</option>
+            <option value="RB">RB</option>
+            <option value="CDM">CDM</option>
+            <option value="CM">CM</option>
+            <option value="CAM">CAM</option>
+            <option value="LW">LW</option>
+            <option value="RW">RW</option>
+            <option value="ST">ST</option>
+          </select>
+          <div class="mini-grid">
+            <div><label>PAC</label><input name="pace" type="number" min="1" max="99" required /></div>
+            <div><label>SHO</label><input name="shooting" type="number" min="1" max="99" required /></div>
+            <div><label>PAS</label><input name="passing" type="number" min="1" max="99" required /></div>
+            <div><label>DRI</label><input name="dribbling" type="number" min="1" max="99" required /></div>
+            <div><label>DEF</label><input name="defending" type="number" min="1" max="99" required /></div>
+            <div><label>PHY</label><input name="physical" type="number" min="1" max="99" required /></div>
+          </div>
+          <button class="btn primary full-width" type="submit">Save player</button>
+        </form>
+
+        <form id="practice-form" class="card inset-card">
+          <h3>Add practice match</h3>
+          <label>Date</label>
+          <input name="match_date" type="date" required />
+          <label>Home team</label>
+          <input name="home_team" value="Orange" required />
+          <label>Away team</label>
+          <input name="away_team" value="Green" required />
+          <div class="mini-grid two-col">
+            <div><label>Home score</label><input name="home_score" type="number" min="0" required /></div>
+            <div><label>Away score</label><input name="away_score" type="number" min="0" required /></div>
+          </div>
+          <label>Notes</label>
+          <input name="notes" placeholder="Friendly internal game" />
+          <button class="btn primary full-width" type="submit">Save practice match</button>
+        </form>
+
+        <form id="external-form" class="card inset-card">
+          <h3>Add club match</h3>
+          <label>Date</label>
+          <input name="match_date" type="date" required />
+          <label>Opponent</label>
+          <input name="opponent_name" required />
+          <label>Venue</label>
+          <select name="venue" required>
+            <option value="Home">Home</option>
+            <option value="Away">Away</option>
+            <option value="Neutral">Neutral</option>
+          </select>
+          <div class="mini-grid two-col">
+            <div><label>Our score</label><input name="our_score" type="number" min="0" required /></div>
+            <div><label>Opponent score</label><input name="opponent_score" type="number" min="0" required /></div>
+          </div>
+          <label>Competition</label>
+          <input name="competition" placeholder="Friendly / League / Cup" />
+          <label>Notes</label>
+          <input name="notes" placeholder="Short note" />
+          <button class="btn primary full-width" type="submit">Save club match</button>
+        </form>
+      </div>
+
+      <section class="grid-3 admin-lists">
+        <div class="card">
+          <div class="section-head"><h3>Players</h3><button id="refresh-admin-data" class="btn small">Refresh</button></div>
+          <div id="admin-players-list" class="list-stack"></div>
+        </div>
+        <div class="card">
+          <div class="section-head"><h3>Practice matches</h3></div>
+          <div id="admin-practice-list" class="list-stack"></div>
+        </div>
+        <div class="card">
+          <div class="section-head"><h3>Club matches</h3></div>
+          <div id="admin-external-list" class="list-stack"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

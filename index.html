@@ -4,56 +4,79 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verterans de la Devesa</title>
-  <meta name="description" content="Official club page for Verterans de la Devesa: squad, practice matches, club fixtures, and a simple lineup predictor." />
+  <meta name="description" content="Official club page for Verterans de la Devesa: squad, match history, and a simple player-based match predictor." />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
-  <header class="hero">
+<body class="public-page">
+  <header class="hero hero-graphic">
+    <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div>
         <p class="eyebrow">Veterans football club</p>
         <h1>Verterans de la Devesa</h1>
-        <p class="lead">A free club website for match history, squad management, internal orange-vs-green games, and a simple player-based prediction tool.</p>
+        <p class="lead">Match history, squad overview, internal Orange vs Green training games, club fixtures, and a simple lineup predictor built from FIFA-style player attributes.</p>
         <div class="cta-row">
-          <a href="#results" class="btn primary">See Results</a>
-          <a href="#predictor" class="btn secondary">Try Predictor</a>
-          <a href="#admin" class="btn ghost">Admin Area</a>
+          <a href="#results" class="btn primary">Latest results</a>
+          <a href="#predictor" class="btn secondary">Predict a match</a>
+          <a href="admin.html" class="btn ghost">Admin page</a>
         </div>
       </div>
-      <div class="logo-card">
-        <img id="club-logo" src="logo-placeholder.jpeg" alt="Club logo" />
+      <div class="hero-side">
+        <div class="logo-card floating-card">
+          <img id="club-logo" src="logo-placeholder.png" alt="Club logo" />
+          <p class="muted small-text">Replace this file with your real logo.</p>
+        </div>
+        <div class="mini-scoreboard">
+          <div><span>Orange</span><strong id="hero-practice-count">0</strong></div>
+          <div><span>Club matches</span><strong id="hero-external-count">0</strong></div>
+        </div>
       </div>
     </div>
+    <div class="pitch-lines"></div>
   </header>
 
   <main class="container">
+    <section class="feature-banner card">
+      <div class="feature-icon">⚽</div>
+      <div>
+        <h2>Club hub</h2>
+        <p class="muted">The main page is public. The admin tools live on a separate page so the site looks more like a real club website.</p>
+      </div>
+    </section>
+
     <section class="stats-grid">
-      <article class="stat-card">
+      <article class="stat-card gradient-blue">
         <span class="stat-label">Players</span>
         <strong id="players-count">0</strong>
       </article>
-      <article class="stat-card">
+      <article class="stat-card gradient-orange">
         <span class="stat-label">Practice matches</span>
         <strong id="practice-count">0</strong>
       </article>
-      <article class="stat-card">
+      <article class="stat-card gradient-green">
         <span class="stat-label">Club matches</span>
         <strong id="external-count">0</strong>
       </article>
-      <article class="stat-card">
+      <article class="stat-card gradient-dark">
         <span class="stat-label">Latest result</span>
         <strong id="latest-result">-</strong>
       </article>
     </section>
 
-    <section class="card" id="about">
-      <div class="section-head stacked-mobile">
-        <div>
-          <h2>About the website</h2>
-          <p class="muted">This version is designed to stay free and simple: GitHub Pages for hosting, Supabase for the database, and a transparent lineup-strength model in JavaScript.</p>
-        </div>
-      </div>
+    <section class="highlights-grid">
+      <article class="card accent-card accent-orange">
+        <h3>Orange vs Green</h3>
+        <p class="muted">Track internal training games separately from official or friendly club fixtures.</p>
+      </article>
+      <article class="card accent-card accent-green">
+        <h3>External fixtures</h3>
+        <p class="muted">Store results against other clubs with venue, competition, and notes.</p>
+      </article>
+      <article class="card accent-card accent-blue">
+        <h3>Lineup predictor</h3>
+        <p class="muted">Estimate match chances from player attributes and positional weights.</p>
+      </article>
     </section>
 
     <section class="grid-2" id="squad">
@@ -61,7 +84,7 @@
         <div class="section-head stacked-mobile">
           <div>
             <h2>Squad</h2>
-            <p class="muted">FIFA-style player attributes used for the predictor.</p>
+            <p class="muted">FIFA-style player ratings used for the predictor.</p>
           </div>
           <button id="refresh-players" class="btn small">Refresh data</button>
         </div>
@@ -86,7 +109,7 @@
 
       <div class="card" id="predictor">
         <h2>Match predictor</h2>
-        <p class="muted">Pick two lineups. The model uses player attributes and positional weights to estimate team strength and simple win/draw/loss probabilities.</p>
+        <p class="muted">Pick two lineups. The model estimates team strength and win/draw/loss probabilities.</p>
         <div class="predictor-grid">
           <div>
             <label for="home-team-name">Team 1</label>
@@ -158,110 +181,12 @@
         </div>
       </div>
     </section>
-
-    <section class="card" id="admin">
-      <div class="section-head stacked-mobile">
-        <div>
-          <h2>Admin area</h2>
-          <p class="muted">Use this to manage players and results directly from the browser. Public visitors can read results, but only signed-in admins can add or edit data.</p>
-        </div>
-        <div class="admin-status" id="auth-status">Not signed in</div>
-      </div>
-
-      <div class="admin-login-grid">
-        <div>
-          <label for="admin-email">Admin email</label>
-          <input id="admin-email" type="email" placeholder="you@example.com" />
-        </div>
-        <div>
-          <label for="admin-password">Password</label>
-          <input id="admin-password" type="password" placeholder="Password" />
-        </div>
-      </div>
-      <div class="cta-row admin-actions">
-        <button id="login-btn" class="btn primary">Log in</button>
-        <button id="logout-btn" class="btn secondary">Log out</button>
-      </div>
-
-      <div id="admin-panels" class="admin-panels hidden">
-        <div class="grid-3">
-          <form id="player-form" class="card inset-card">
-            <h3>Add player</h3>
-            <label>Name</label>
-            <input name="name" required />
-            <label>Position</label>
-            <select name="position" required>
-              <option value="GK">GK</option>
-              <option value="CB">CB</option>
-              <option value="LB">LB</option>
-              <option value="RB">RB</option>
-              <option value="CDM">CDM</option>
-              <option value="CM">CM</option>
-              <option value="CAM">CAM</option>
-              <option value="LW">LW</option>
-              <option value="RW">RW</option>
-              <option value="ST">ST</option>
-            </select>
-            <div class="mini-grid">
-              <div><label>PAC</label><input name="pace" type="number" min="1" max="99" required /></div>
-              <div><label>SHO</label><input name="shooting" type="number" min="1" max="99" required /></div>
-              <div><label>PAS</label><input name="passing" type="number" min="1" max="99" required /></div>
-              <div><label>DRI</label><input name="dribbling" type="number" min="1" max="99" required /></div>
-              <div><label>DEF</label><input name="defending" type="number" min="1" max="99" required /></div>
-              <div><label>PHY</label><input name="physical" type="number" min="1" max="99" required /></div>
-            </div>
-            <button class="btn primary full-width" type="submit">Save player</button>
-          </form>
-
-          <form id="practice-form" class="card inset-card">
-            <h3>Add practice match</h3>
-            <label>Date</label>
-            <input name="match_date" type="date" required />
-            <label>Home team</label>
-            <input name="home_team" value="Orange" required />
-            <label>Away team</label>
-            <input name="away_team" value="Green" required />
-            <div class="mini-grid two-col">
-              <div><label>Home score</label><input name="home_score" type="number" min="0" required /></div>
-              <div><label>Away score</label><input name="away_score" type="number" min="0" required /></div>
-            </div>
-            <label>Notes</label>
-            <input name="notes" placeholder="Friendly internal game" />
-            <button class="btn primary full-width" type="submit">Save practice match</button>
-          </form>
-
-          <form id="external-form" class="card inset-card">
-            <h3>Add club match</h3>
-            <label>Date</label>
-            <input name="match_date" type="date" required />
-            <label>Opponent</label>
-            <input name="opponent_name" required />
-            <label>Venue</label>
-            <select name="venue" required>
-              <option value="Home">Home</option>
-              <option value="Away">Away</option>
-              <option value="Neutral">Neutral</option>
-            </select>
-            <div class="mini-grid two-col">
-              <div><label>Our score</label><input name="our_score" type="number" min="0" required /></div>
-              <div><label>Opponent score</label><input name="opponent_score" type="number" min="0" required /></div>
-            </div>
-            <label>Competition</label>
-            <input name="competition" placeholder="Friendly / League / Cup" />
-            <label>Notes</label>
-            <input name="notes" placeholder="Short note" />
-            <button class="btn primary full-width" type="submit">Save club match</button>
-          </form>
-        </div>
-      </div>
-
-      <div id="admin-message" class="result-box muted">To use the admin forms, sign in with a Supabase user you create for yourself.</div>
-    </section>
   </main>
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>Verterans de la Devesa · Free website starter built for GitHub Pages + Supabase.</p>
+      <p>Verterans de la Devesa · Public site</p>
+      <a href="admin.html" class="footer-link">Open admin page</a>
     </div>
   </footer>
 

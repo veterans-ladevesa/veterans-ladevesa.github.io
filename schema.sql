@@ -36,54 +36,28 @@ create table if not exists public.external_matches (
   created_at timestamptz default now()
 );
 
+alter table public.players add column if not exists position text;
+alter table public.practice_matches add column if not exists notes text;
+alter table public.external_matches add column if not exists notes text;
+
 alter table public.players enable row level security;
 alter table public.practice_matches enable row level security;
 alter table public.external_matches enable row level security;
 
--- Public visitors can read all tables.
 drop policy if exists "public read players" on public.players;
-create policy "public read players"
-on public.players for select to anon, authenticated using (true);
+create policy "public read players" on public.players for select to anon, authenticated using (true);
 
 drop policy if exists "public read practice" on public.practice_matches;
-create policy "public read practice"
-on public.practice_matches for select to anon, authenticated using (true);
+create policy "public read practice" on public.practice_matches for select to anon, authenticated using (true);
 
 drop policy if exists "public read external" on public.external_matches;
-create policy "public read external"
-on public.external_matches for select to anon, authenticated using (true);
+create policy "public read external" on public.external_matches for select to anon, authenticated using (true);
 
--- Any signed-in user can manage rows.
--- For a stricter version later, replace authenticated with your own auth logic.
 drop policy if exists "authenticated manage players" on public.players;
-create policy "authenticated manage players"
-on public.players for all to authenticated using (true) with check (true);
+create policy "authenticated manage players" on public.players for all to authenticated using (true) with check (true);
 
 drop policy if exists "authenticated manage practice" on public.practice_matches;
-create policy "authenticated manage practice"
-on public.practice_matches for all to authenticated using (true) with check (true);
+create policy "authenticated manage practice" on public.practice_matches for all to authenticated using (true) with check (true);
 
 drop policy if exists "authenticated manage external" on public.external_matches;
-create policy "authenticated manage external"
-on public.external_matches for all to authenticated using (true) with check (true);
-
-insert into public.players (name, position, pace, shooting, passing, dribbling, defending, physical)
-values
-  ('Ahmed', 'ST', 74, 72, 60, 71, 38, 68),
-  ('Carlos', 'CM', 62, 64, 76, 69, 65, 70),
-  ('Jordi', 'CB', 52, 41, 61, 55, 78, 77),
-  ('Miquel', 'RW', 79, 68, 70, 75, 35, 61),
-  ('Pau', 'GK', 40, 15, 58, 20, 18, 66),
-  ('Rafa', 'LB', 71, 48, 66, 67, 72, 69),
-  ('Sergi', 'CAM', 68, 70, 74, 73, 44, 63),
-  ('Victor', 'CDM', 59, 55, 67, 61, 74, 75);
-
-insert into public.practice_matches (match_date, home_team, away_team, home_score, away_score, notes)
-values
-  ('2026-04-10', 'Orange', 'Green', 4, 3, 'Thursday training game'),
-  ('2026-04-17', 'Green', 'Orange', 2, 2, 'Balanced game');
-
-insert into public.external_matches (match_date, opponent_name, venue, our_score, opponent_score, competition, notes)
-values
-  ('2026-04-05', 'UE Example', 'Home', 3, 1, 'Friendly', 'Sample row'),
-  ('2026-04-12', 'CF Sample', 'Away', 1, 2, 'Friendly', 'Sample row');
+create policy "authenticated manage external" on public.external_matches for all to authenticated using (true) with check (true);

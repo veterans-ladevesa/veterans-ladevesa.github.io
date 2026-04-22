@@ -1,22 +1,20 @@
 const localPlayers = [
-  { name: 'Ahmed', position: 'ST', pace: 74, shooting: 72, passing: 60, dribbling: 71, defending: 38, physical: 68 },
-  { name: 'Carlos', position: 'CM', pace: 62, shooting: 64, passing: 76, dribbling: 69, defending: 65, physical: 70 },
-  { name: 'Jordi', position: 'CB', pace: 52, shooting: 41, passing: 61, dribbling: 55, defending: 78, physical: 77 },
-  { name: 'Miquel', position: 'RW', pace: 79, shooting: 68, passing: 70, dribbling: 75, defending: 35, physical: 61 },
-  { name: 'Pau', position: 'GK', pace: 40, shooting: 15, passing: 58, dribbling: 20, defending: 18, physical: 66 },
-  { name: 'Rafa', position: 'LB', pace: 71, shooting: 48, passing: 66, dribbling: 67, defending: 72, physical: 69 },
-  { name: 'Sergi', position: 'CAM', pace: 68, shooting: 70, passing: 74, dribbling: 73, defending: 44, physical: 63 },
-  { name: 'Victor', position: 'CDM', pace: 59, shooting: 55, passing: 67, dribbling: 61, defending: 74, physical: 75 }
+  { id: 1, name: 'Ahmed', position: 'ST', pace: 74, shooting: 72, passing: 60, dribbling: 71, defending: 38, physical: 68 },
+  { id: 2, name: 'Carlos', position: 'CM', pace: 62, shooting: 64, passing: 76, dribbling: 69, defending: 65, physical: 70 },
+  { id: 3, name: 'Jordi', position: 'CB', pace: 52, shooting: 41, passing: 61, dribbling: 55, defending: 78, physical: 77 },
+  { id: 4, name: 'Miquel', position: 'RW', pace: 79, shooting: 68, passing: 70, dribbling: 75, defending: 35, physical: 61 },
+  { id: 5, name: 'Pau', position: 'GK', pace: 40, shooting: 15, passing: 58, dribbling: 20, defending: 18, physical: 66 },
+  { id: 6, name: 'Rafa', position: 'LB', pace: 71, shooting: 48, passing: 66, dribbling: 67, defending: 72, physical: 69 }
 ];
 
 const localPracticeMatches = [
-  { match_date: '2026-04-10', home_team: 'Orange', away_team: 'Green', home_score: 4, away_score: 3, notes: 'Thursday training game' },
-  { match_date: '2026-04-17', home_team: 'Green', away_team: 'Orange', home_score: 2, away_score: 2, notes: 'Balanced game' }
+  { id: 1, match_date: '2026-04-10', home_team: 'Orange', away_team: 'Green', home_score: 4, away_score: 3, notes: 'Thursday training game' },
+  { id: 2, match_date: '2026-04-17', home_team: 'Green', away_team: 'Orange', home_score: 2, away_score: 2, notes: 'Balanced game' }
 ];
 
 const localExternalMatches = [
-  { match_date: '2026-04-05', opponent_name: 'UE Example', venue: 'Home', our_score: 3, opponent_score: 1, competition: 'Friendly', notes: 'Solid home match' },
-  { match_date: '2026-04-12', opponent_name: 'CF Sample', venue: 'Away', our_score: 1, opponent_score: 2, competition: 'Friendly', notes: 'Tough away fixture' }
+  { id: 1, match_date: '2026-04-05', opponent_name: 'UE Example', venue: 'Home', our_score: 3, opponent_score: 1, competition: 'Friendly', notes: 'Solid home match' },
+  { id: 2, match_date: '2026-04-12', opponent_name: 'CF Sample', venue: 'Away', our_score: 1, opponent_score: 2, competition: 'Friendly', notes: 'Tough away fixture' }
 ];
 
 const positionWeights = {
@@ -33,59 +31,36 @@ const positionWeights = {
 };
 
 const config = window.APP_CONFIG || {};
-const hasSupabaseConfig = Boolean(
-  config.SUPABASE_URL &&
-  config.SUPABASE_ANON_KEY &&
-  !config.SUPABASE_URL.includes('YOUR_PROJECT')
-);
-
-const supabaseClient = hasSupabaseConfig
-  ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
-  : null;
+const hasSupabaseConfig = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes('YOUR_PROJECT'));
+const supabaseClient = hasSupabaseConfig ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
 
 let playersCache = [...localPlayers];
 let practiceCache = [...localPracticeMatches];
 let externalCache = [...localExternalMatches];
 
 const $ = (id) => document.getElementById(id);
+const exists = (id) => Boolean($(id));
+const isAdminPage = exists('admin-panels');
 
 function showMessage(text, type = 'muted') {
   const box = $('admin-message');
-  if (!box) {
-    alert(text);
-    return;
-  }
+  if (!box) return;
   box.className = `result-box ${type}`;
   box.textContent = text;
-  box.style.display = 'block';
 }
 
 function updateAuthUI(user) {
-  const statusEl = $('auth-status');
-  const panelsEl = $('admin-panels');
-
-  if (statusEl) {
-    statusEl.textContent = user && user.email
-      ? `Signed in as ${user.email}`
-      : 'Not signed in';
+  if (exists('auth-status')) {
+    $('auth-status').textContent = user?.email ? `Signed in as ${user.email}` : 'Not signed in';
   }
-
-  if (panelsEl) {
-    panelsEl.classList.toggle('hidden', !user);
+  if (exists('admin-panels')) {
+    $('admin-panels').classList.toggle('hidden', !user);
   }
 }
 
 function playerScore(player) {
   const w = positionWeights[player.position] || positionWeights.CM;
-  return (
-    player.pace * w.pace +
-    player.shooting * w.shooting +
-    player.passing * w.passing +
-    player.dribbling * w.dribbling +
-    player.defending * w.defending +
-    player.physical * w.physical +
-    100 * w.base
-  );
+  return player.pace * w.pace + player.shooting * w.shooting + player.passing * w.passing + player.dribbling * w.dribbling + player.defending * w.defending + player.physical * w.physical + 100 * w.base;
 }
 
 function teamStrength(players) {
@@ -95,9 +70,7 @@ function teamStrength(players) {
   const defenders = players.filter((p) => ['CB', 'LB', 'RB', 'CDM'].includes(p.position)).length;
   const attackers = players.filter((p) => ['CAM', 'LW', 'RW', 'ST'].includes(p.position)).length;
   const midfielders = players.filter((p) => ['CM', 'CDM', 'CAM'].includes(p.position)).length;
-  const shapeBonus = defenders >= 2 && attackers >= 2 && midfielders >= 1 ? 2.5 : 0;
-  const keeperBonus = hasKeeper ? 3 : 0;
-  return avg + shapeBonus + keeperBonus;
+  return avg + (defenders >= 2 && attackers >= 2 && midfielders >= 1 ? 2.5 : 0) + (hasKeeper ? 3 : 0);
 }
 
 function softmax3(home, draw, away) {
@@ -112,300 +85,222 @@ function predictMatch(homePlayers, awayPlayers) {
   const diff = (hs - as) / 12;
   const [pHome, pDraw, pAway] = softmax3(diff + 0.18, -Math.abs(diff) * 0.35, -diff);
   return {
-    homeStrength: hs.toFixed(1),
-    awayStrength: as.toFixed(1),
-    pHome: (pHome * 100).toFixed(1),
-    pDraw: (pDraw * 100).toFixed(1),
-    pAway: (pAway * 100).toFixed(1)
+    homeStrength: hs.toFixed(1), awayStrength: as.toFixed(1),
+    pHome: (pHome * 100).toFixed(1), pDraw: (pDraw * 100).toFixed(1), pAway: (pAway * 100).toFixed(1)
   };
 }
 
-function sortByDateDesc(items, key = 'match_date') {
-  return [...items].sort((a, b) => new Date(b[key]) - new Date(a[key]));
-}
+function sortByDateDesc(items, key = 'match_date') { return [...items].sort((a, b) => new Date(b[key]) - new Date(a[key])); }
 
 function renderPlayers(players) {
-  $('players-body').innerHTML = players.map((p) => `
-    <tr>
-      <td>${p.name}</td>
-      <td>${p.position}</td>
-      <td>${p.pace}</td>
-      <td>${p.shooting}</td>
-      <td>${p.passing}</td>
-      <td>${p.dribbling}</td>
-      <td>${p.defending}</td>
-      <td>${p.physical}</td>
-    </tr>
-  `).join('');
-
-  const options = players.map((p, i) => `<option value="${i}">${p.name} (${p.position})</option>`).join('');
-  $('home-lineup').innerHTML = options;
-  $('away-lineup').innerHTML = options;
-  $('players-count').textContent = players.length;
+  if (exists('players-body')) {
+    $('players-body').innerHTML = players.map((p) => `
+      <tr><td>${p.name}</td><td>${p.position}</td><td>${p.pace}</td><td>${p.shooting}</td><td>${p.passing}</td><td>${p.dribbling}</td><td>${p.defending}</td><td>${p.physical}</td></tr>
+    `).join('');
+  }
+  if (exists('home-lineup') && exists('away-lineup')) {
+    const options = players.map((p, i) => `<option value="${i}">${p.name} (${p.position})</option>`).join('');
+    $('home-lineup').innerHTML = options;
+    $('away-lineup').innerHTML = options;
+  }
+  if (exists('players-count')) $('players-count').textContent = players.length;
+  if (exists('admin-players-list')) {
+    $('admin-players-list').innerHTML = players.map((p) => `
+      <div class="manage-item">
+        <h4>${p.name} <span class="muted">(${p.position})</span></h4>
+        <p>PAC ${p.pace} · SHO ${p.shooting} · PAS ${p.passing}</p>
+        <p>DRI ${p.dribbling} · DEF ${p.defending} · PHY ${p.physical}</p>
+        <div class="item-actions"><button class="btn danger delete-btn" data-table="players" data-id="${p.id}">Delete</button></div>
+      </div>
+    `).join('') || '<p class="muted">No players yet.</p>';
+  }
 }
 
 function renderPractice(matches) {
   const sorted = sortByDateDesc(matches);
-  $('practice-body').innerHTML = sorted.map((m) => `
-    <tr>
-      <td>${m.match_date}</td>
-      <td>${m.home_team}</td>
-      <td>${m.home_score} - ${m.away_score}</td>
-      <td>${m.away_team}</td>
-      <td>${m.notes || ''}</td>
-    </tr>
-  `).join('');
-  $('practice-count').textContent = sorted.length;
+  if (exists('practice-body')) {
+    $('practice-body').innerHTML = sorted.map((m) => `
+      <tr><td>${m.match_date}</td><td>${m.home_team}</td><td>${m.home_score} - ${m.away_score}</td><td>${m.away_team}</td><td>${m.notes || ''}</td></tr>
+    `).join('');
+  }
+  if (exists('practice-count')) $('practice-count').textContent = sorted.length;
+  if (exists('hero-practice-count')) $('hero-practice-count').textContent = sorted.length;
+  if (exists('admin-practice-list')) {
+    $('admin-practice-list').innerHTML = sorted.map((m) => `
+      <div class="manage-item">
+        <h4>${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}</h4>
+        <p>${m.match_date}</p>
+        <p>${m.notes || ''}</p>
+        <div class="item-actions"><button class="btn danger delete-btn" data-table="practice_matches" data-id="${m.id}">Delete</button></div>
+      </div>
+    `).join('') || '<p class="muted">No practice matches yet.</p>';
+  }
 }
 
 function renderExternal(matches) {
   const sorted = sortByDateDesc(matches);
-  $('external-body').innerHTML = sorted.map((m) => `
-    <tr>
-      <td>${m.match_date}</td>
-      <td>${m.opponent_name}</td>
-      <td>${m.venue}</td>
-      <td>${m.our_score} - ${m.opponent_score}</td>
-      <td>${m.competition || ''}</td>
-    </tr>
-  `).join('');
-  $('external-count').textContent = sorted.length;
+  if (exists('external-body')) {
+    $('external-body').innerHTML = sorted.map((m) => `
+      <tr><td>${m.match_date}</td><td>${m.opponent_name}</td><td>${m.venue}</td><td>${m.our_score} - ${m.opponent_score}</td><td>${m.competition || ''}</td></tr>
+    `).join('');
+  }
+  if (exists('external-count')) $('external-count').textContent = sorted.length;
+  if (exists('hero-external-count')) $('hero-external-count').textContent = sorted.length;
+  if (exists('admin-external-list')) {
+    $('admin-external-list').innerHTML = sorted.map((m) => `
+      <div class="manage-item">
+        <h4>VdlD ${m.our_score}-${m.opponent_score} ${m.opponent_name}</h4>
+        <p>${m.match_date} · ${m.venue}</p>
+        <p>${m.competition || ''}</p>
+        <div class="item-actions"><button class="btn danger delete-btn" data-table="external_matches" data-id="${m.id}">Delete</button></div>
+      </div>
+    `).join('') || '<p class="muted">No club matches yet.</p>';
+  }
 }
 
 function updateSummaryCards() {
-  const all = [
-    ...practiceCache.map((m) => ({ date: m.match_date, text: `${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}` })),
-    ...externalCache.map((m) => ({ date: m.match_date, text: `VdlD ${m.our_score}-${m.opponent_score} ${m.opponent_name}` }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  $('latest-result').textContent = all.length ? all[0].text : '-';
+  const all = [...practiceCache.map((m) => ({ date: m.match_date, text: `${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}` })), ...externalCache.map((m) => ({ date: m.match_date, text: `VdlD ${m.our_score}-${m.opponent_score} ${m.opponent_name}` }))].sort((a, b) => new Date(b.date) - new Date(a.date));
+  if (exists('latest-result')) $('latest-result').textContent = all.length ? all[0].text : '-';
 }
 
-async function fetchPlayers() {
-  if (!supabaseClient) return localPlayers;
-  const { data, error } = await supabaseClient.from('players').select('*').order('name');
-  if (error) {
-    console.error('Fetch players error:', error);
-    return localPlayers;
-  }
-  return data || localPlayers;
-}
-
-async function fetchPracticeMatches() {
-  if (!supabaseClient) return localPracticeMatches;
-  const { data, error } = await supabaseClient.from('practice_matches').select('*').order('match_date', { ascending: false });
-  if (error) {
-    console.error('Fetch practice matches error:', error);
-    return localPracticeMatches;
-  }
-  return data || localPracticeMatches;
-}
-
-async function fetchExternalMatches() {
-  if (!supabaseClient) return localExternalMatches;
-  const { data, error } = await supabaseClient.from('external_matches').select('*').order('match_date', { ascending: false });
-  if (error) {
-    console.error('Fetch external matches error:', error);
-    return localExternalMatches;
-  }
-  return data || localExternalMatches;
-}
-
-function selectedPlayers(selectId) {
-  return Array.from($(selectId).selectedOptions)
-    .map((option) => playersCache[Number(option.value)])
-    .filter(Boolean);
+async function fetchRows(table, fallback, orderCol, asc=false) {
+  if (!supabaseClient) return fallback;
+  const { data, error } = await supabaseClient.from(table).select('*').order(orderCol, { ascending: asc });
+  if (error) { console.error(`Fetch ${table} error:`, error); return fallback; }
+  return data || fallback;
 }
 
 async function loadAllData() {
-  playersCache = await fetchPlayers();
-  practiceCache = await fetchPracticeMatches();
-  externalCache = await fetchExternalMatches();
-  renderPlayers(playersCache);
-  renderPractice(practiceCache);
-  renderExternal(externalCache);
-  updateSummaryCards();
+  playersCache = await fetchRows('players', localPlayers, 'name', true);
+  practiceCache = await fetchRows('practice_matches', localPracticeMatches, 'match_date', false);
+  externalCache = await fetchRows('external_matches', localExternalMatches, 'match_date', false);
+  renderPlayers(playersCache); renderPractice(practiceCache); renderExternal(externalCache); updateSummaryCards();
+}
+
+function selectedPlayers(selectId) {
+  if (!exists(selectId)) return [];
+  return Array.from($(selectId).selectedOptions).map((option) => playersCache[Number(option.value)]).filter(Boolean);
 }
 
 function autoFillPracticeLineups() {
-  const homeSelect = $('home-lineup');
-  const awaySelect = $('away-lineup');
+  if (!exists('home-lineup') || !exists('away-lineup')) return;
   const half = Math.ceil(playersCache.length / 2);
-  Array.from(homeSelect.options).forEach((option, idx) => { option.selected = idx < half; });
-  Array.from(awaySelect.options).forEach((option, idx) => { option.selected = idx >= half; });
+  Array.from($('home-lineup').options).forEach((option, idx) => { option.selected = idx < half; });
+  Array.from($('away-lineup').options).forEach((option, idx) => { option.selected = idx >= half; });
 }
 
 async function loginAdmin() {
-  if (!supabaseClient) {
-    showMessage('Supabase is not configured yet. Add your project URL and anon key in config.js first.', 'error');
-    return;
-  }
-
+  if (!supabaseClient) { showMessage('Supabase is not configured yet. Add your project URL and anon key in config.js first.', 'error'); return; }
   const email = ($('admin-email')?.value || '').trim();
   const password = ($('admin-password')?.value || '').trim();
-
-  if (!email || !password) {
-    showMessage('Enter your admin email and password first.', 'error');
-    return;
-  }
-
+  if (!email || !password) { showMessage('Enter your admin email and password first.', 'error'); return; }
   const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    console.error('Login failed:', error);
-    showMessage(`Login failed: ${error.message}`, 'error');
-    updateAuthUI(null);
-    return;
-  }
-
-  const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
-
-  if (sessionError) {
-    console.error('Session read failed after login:', sessionError);
-    showMessage('Login succeeded, but the session could not be read.', 'error');
-    return;
-  }
-
-  const user = sessionData?.session?.user || null;
-  updateAuthUI(user);
-  showMessage('Login successful. You can now use the admin forms.', 'success');
+  if (error) { showMessage(`Login failed: ${error.message}`, 'error'); updateAuthUI(null); return; }
+  const { data: sessionData } = await supabaseClient.auth.getSession();
+  updateAuthUI(sessionData?.session?.user || null);
+  showMessage('Login successful. You can now manage club data.', 'success');
 }
 
 async function logoutAdmin() {
   if (!supabaseClient) return;
-
-  const { error } = await supabaseClient.auth.signOut();
-
-  if (error) {
-    console.error('Logout failed:', error);
-    showMessage(`Logout failed: ${error.message}`, 'error');
-    return;
-  }
-
+  await supabaseClient.auth.signOut();
   updateAuthUI(null);
   showMessage('You have been logged out.', 'muted');
 }
 
-function formToObject(form) {
-  const data = new FormData(form);
-  return Object.fromEntries(data.entries());
-}
+function formToObject(form) { return Object.fromEntries(new FormData(form).entries()); }
+function castNumericFields(obj, fields) { const copy = { ...obj }; fields.forEach((field) => { if (copy[field] !== undefined) copy[field] = Number(copy[field]); }); return copy; }
 
-function castNumericFields(obj, fields) {
-  const copy = { ...obj };
-  fields.forEach((field) => {
-    if (copy[field] !== undefined) copy[field] = Number(copy[field]);
-  });
-  return copy;
+async function requireUser() {
+  if (!supabaseClient) return null;
+  const { data } = await supabaseClient.auth.getSession();
+  const user = data?.session?.user || null;
+  updateAuthUI(user);
+  return user;
 }
 
 async function insertRow(table, row) {
-  if (!supabaseClient) {
-    showMessage('Supabase is not configured yet. Add config.js first.', 'error');
-    return false;
-  }
-
-  const { data: sessionData } = await supabaseClient.auth.getSession();
-  const user = sessionData?.session?.user || null;
-
-  if (!user) {
-    showMessage('You must log in first.', 'error');
-    updateAuthUI(null);
-    return false;
-  }
-
+  const user = await requireUser();
+  if (!user) { showMessage('You must log in first.', 'error'); return false; }
   const { error } = await supabaseClient.from(table).insert(row);
-
-  if (error) {
-    console.error(`Insert into ${table} failed:`, error);
-    showMessage(`Could not save to ${table}: ${error.message}`, 'error');
-    return false;
-  }
-
+  if (error) { showMessage(`Could not save to ${table}: ${error.message}`, 'error'); return false; }
   return true;
 }
 
-$('refresh-players').addEventListener('click', loadAllData);
+async function deleteRow(table, id) {
+  const user = await requireUser();
+  if (!user) { showMessage('You must log in first.', 'error'); return false; }
+  const { error } = await supabaseClient.from(table).delete().eq('id', id);
+  if (error) { showMessage(`Could not delete from ${table}: ${error.message}`, 'error'); return false; }
+  showMessage('Entry deleted.', 'success');
+  await loadAllData();
+  return true;
+}
 
-$('run-prediction').addEventListener('click', () => {
-  const homePlayers = selectedPlayers('home-lineup');
-  const awayPlayers = selectedPlayers('away-lineup');
-  const homeName = $('home-team-name').value || 'Team 1';
-  const awayName = $('away-team-name').value || 'Team 2';
+function bindEvents() {
+  if (exists('refresh-players')) $('refresh-players').addEventListener('click', loadAllData);
+  if (exists('refresh-admin-data')) $('refresh-admin-data').addEventListener('click', loadAllData);
+  if (exists('fill-practice-lineups')) $('fill-practice-lineups').addEventListener('click', autoFillPracticeLineups);
+  if (exists('login-btn')) $('login-btn').addEventListener('click', loginAdmin);
+  if (exists('logout-btn')) $('logout-btn').addEventListener('click', logoutAdmin);
 
-  if (!homePlayers.length || !awayPlayers.length) {
-    $('prediction-result').innerHTML = '<strong>Select players for both teams first.</strong>';
-    return;
+  if (exists('run-prediction')) {
+    $('run-prediction').addEventListener('click', () => {
+      const homePlayers = selectedPlayers('home-lineup');
+      const awayPlayers = selectedPlayers('away-lineup');
+      const homeName = $('home-team-name').value || 'Team 1';
+      const awayName = $('away-team-name').value || 'Team 2';
+      if (!homePlayers.length || !awayPlayers.length) { $('prediction-result').innerHTML = '<strong>Select players for both teams first.</strong>'; return; }
+      const result = predictMatch(homePlayers, awayPlayers);
+      $('prediction-result').innerHTML = `<strong>${homeName} vs ${awayName}</strong><br>Strength: ${homeName} ${result.homeStrength} · ${awayName} ${result.awayStrength}<br>Probabilities: ${homeName} win ${result.pHome}% · Draw ${result.pDraw}% · ${awayName} win ${result.pAway}%`;
+    });
   }
 
-  const result = predictMatch(homePlayers, awayPlayers);
-  $('prediction-result').innerHTML = `
-    <strong>${homeName} vs ${awayName}</strong><br>
-    Strength: ${homeName} ${result.homeStrength} · ${awayName} ${result.awayStrength}<br>
-    Probabilities: ${homeName} win ${result.pHome}% · Draw ${result.pDraw}% · ${awayName} win ${result.pAway}%
-  `;
-});
+  if (exists('player-form')) $('player-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const row = castNumericFields(formToObject(event.target), ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical']);
+    const ok = await insertRow('players', row);
+    if (ok) { event.target.reset(); showMessage('Player saved.', 'success'); await loadAllData(); }
+  });
 
-$('fill-practice-lineups').addEventListener('click', autoFillPracticeLineups);
-$('login-btn').addEventListener('click', loginAdmin);
-$('logout-btn').addEventListener('click', logoutAdmin);
+  if (exists('practice-form')) $('practice-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const row = castNumericFields(formToObject(event.target), ['home_score', 'away_score']);
+    const ok = await insertRow('practice_matches', row);
+    if (ok) { event.target.reset(); showMessage('Practice match saved.', 'success'); await loadAllData(); }
+  });
 
-$('player-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const row = castNumericFields(formToObject(event.target), ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical']);
-  const ok = await insertRow('players', row);
-  if (ok) {
-    event.target.reset();
-    showMessage('Player saved.', 'success');
-    await loadAllData();
-  }
-});
+  if (exists('external-form')) $('external-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const row = castNumericFields(formToObject(event.target), ['our_score', 'opponent_score']);
+    const ok = await insertRow('external_matches', row);
+    if (ok) { event.target.reset(); showMessage('Club match saved.', 'success'); await loadAllData(); }
+  });
 
-$('practice-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const row = castNumericFields(formToObject(event.target), ['home_score', 'away_score']);
-  const ok = await insertRow('practice_matches', row);
-  if (ok) {
-    event.target.reset();
-    showMessage('Practice match saved.', 'success');
-    await loadAllData();
-  }
-});
-
-$('external-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const row = castNumericFields(formToObject(event.target), ['our_score', 'opponent_score']);
-  const ok = await insertRow('external_matches', row);
-  if (ok) {
-    event.target.reset();
-    showMessage('Club match saved.', 'success');
-    await loadAllData();
-  }
-});
+  document.addEventListener('click', async (event) => {
+    const btn = event.target.closest('.delete-btn');
+    if (!btn) return;
+    const table = btn.dataset.table;
+    const id = Number(btn.dataset.id);
+    const confirmed = window.confirm('Delete this entry?');
+    if (!confirmed) return;
+    await deleteRow(table, id);
+  });
+}
 
 async function init() {
+  bindEvents();
   await loadAllData();
   autoFillPracticeLineups();
-
   if (!supabaseClient) {
-    showMessage('Site is running in demo mode. Create config.js and connect Supabase to enable real data and admin login.', 'muted');
     updateAuthUI(null);
+    showMessage('Site is running in demo mode. Create config.js and connect Supabase to enable real data and admin login.', 'muted');
     return;
   }
-
-  const { data, error } = await supabaseClient.auth.getSession();
-
-  if (error) {
-    console.error('Initial session read failed:', error);
-    updateAuthUI(null);
-  } else {
-    updateAuthUI(data?.session?.user || null);
-  }
-
-  supabaseClient.auth.onAuthStateChange((_event, session) => {
-    console.log('Auth state changed:', _event, session);
-    updateAuthUI(session?.user || null);
-  });
+  const { data } = await supabaseClient.auth.getSession();
+  updateAuthUI(data?.session?.user || null);
+  if (isAdminPage && !data?.session?.user) showMessage('Sign in to manage club data.', 'muted');
+  supabaseClient.auth.onAuthStateChange((_event, session) => updateAuthUI(session?.user || null));
 }
 
 init();
