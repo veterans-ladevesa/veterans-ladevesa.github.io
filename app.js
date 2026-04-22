@@ -33,8 +33,15 @@ const positionWeights = {
 };
 
 const config = window.APP_CONFIG || {};
-const hasSupabaseConfig = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes('YOUR_PROJECT'));
-const supabase = hasSupabaseConfig ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
+const hasSupabaseConfig = Boolean(
+  config.SUPABASE_URL &&
+  config.SUPABASE_ANON_KEY &&
+  !config.SUPABASE_URL.includes('YOUR_PROJECT')
+);
+
+const supabaseClient = hasSupabaseConfig
+  ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+  : null;
 
 let playersCache = [...localPlayers];
 let practiceCache = [...localPracticeMatches];
@@ -93,241 +100,40 @@ function predictMatch(homePlayers, awayPlayers) {
   };
 }
 
-function sortByDateDesc(items, key = 'match_date') {
-  return [...items].sort((a, b) => new Date(b[key]) - new Date(a[key]));
-}
-
-function renderPlayers(players) {
-  $('players-body').innerHTML = players.map((p) => `
-    <tr>
-      <td>${p.name}</td>
-      <td>${p.position}</td>
-      <td>${p.pace}</td>
-      <td>${p.shooting}</td>
-      <td>${p.passing}</td>
-      <td>${p.dribbling}</td>
-      <td>${p.defending}</td>
-      <td>${p.physical}</td>
-    </tr>
-  `).join('');
-
-  const options = players.map((p, i) => `<option value="${i}">${p.name} (${p.position})</option>`).join('');
-  $('home-lineup').innerHTML = options;
-  $('away-lineup').innerHTML = options;
-  $('players-count').textContent = players.length;
-}
-
-function renderPractice(matches) {
-  const sorted = sortByDateDesc(matches);
-  $('practice-body').innerHTML = sorted.map((m) => `
-    <tr>
-      <td>${m.match_date}</td>
-      <td>${m.home_team}</td>
-      <td>${m.home_score} - ${m.away_score}</td>
-      <td>${m.away_team}</td>
-      <td>${m.notes || ''}</td>
-    </tr>
-  `).join('');
-  $('practice-count').textContent = sorted.length;
-}
-
-function renderExternal(matches) {
-  const sorted = sortByDateDesc(matches);
-  $('external-body').innerHTML = sorted.map((m) => `
-    <tr>
-      <td>${m.match_date}</td>
-      <td>${m.opponent_name}</td>
-      <td>${m.venue}</td>
-      <td>${m.our_score} - ${m.opponent_score}</td>
-      <td>${m.competition || ''}</td>
-    </tr>
-  `).join('');
-  $('external-count').textContent = sorted.length;
-}
-
-function updateSummaryCards() {
-  const all = [
-    ...practiceCache.map((m) => ({ date: m.match_date, text: `${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}` })),
-    ...externalCache.map((m) => ({ date: m.match_date, text: `VdlD ${m.our_score}-${m.opponent_score} ${m.opponent_name}` }))
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  $('latest-result').textContent = all.length ? all[0].text : '-';
-}
-
 async function fetchPlayers() {
-  if (!supabase) return localPlayers;
-  const { data, error } = await supabase.from('players').select('*').order('name');
-  if (error) return localPlayers;
-  return data;
+  if (!supabaseClient) return localPlayers;
+  const { data } = await supabaseClient.from('players').select('*').order('name');
+  return data || localPlayers;
 }
 
 async function fetchPracticeMatches() {
-  if (!supabase) return localPracticeMatches;
-  const { data, error } = await supabase.from('practice_matches').select('*').order('match_date', { ascending: false });
-  if (error) return localPracticeMatches;
-  return data;
+  if (!supabaseClient) return localPracticeMatches;
+  const { data } = await supabaseClient.from('practice_matches').select('*');
+  return data || localPracticeMatches;
 }
 
 async function fetchExternalMatches() {
-  if (!supabase) return localExternalMatches;
-  const { data, error } = await supabase.from('external_matches').select('*').order('match_date', { ascending: false });
-  if (error) return localExternalMatches;
-  return data;
-}
-
-function selectedPlayers(selectId) {
-  return Array.from($(selectId).selectedOptions)
-    .map((option) => playersCache[Number(option.value)])
-    .filter(Boolean);
-}
-
-function updateAuthUI(user) {
-  $('auth-status').textContent = user ? `Signed in as ${user.email}` : 'Not signed in';
-  $('admin-panels').classList.toggle('hidden', !user);
-}
-
-async function loadAllData() {
-  playersCache = await fetchPlayers();
-  practiceCache = await fetchPracticeMatches();
-  externalCache = await fetchExternalMatches();
-  renderPlayers(playersCache);
-  renderPractice(practiceCache);
-  renderExternal(externalCache);
-  updateSummaryCards();
-}
-
-function autoFillPracticeLineups() {
-  const homeSelect = $('home-lineup');
-  const awaySelect = $('away-lineup');
-  const half = Math.ceil(playersCache.length / 2);
-  Array.from(homeSelect.options).forEach((option, idx) => { option.selected = idx < half; });
-  Array.from(awaySelect.options).forEach((option, idx) => { option.selected = idx >= half; });
+  if (!supabaseClient) return localExternalMatches;
+  const { data } = await supabaseClient.from('external_matches').select('*');
+  return data || localExternalMatches;
 }
 
 async function loginAdmin() {
-  if (!supabase) {
-    showMessage('Supabase is not configured yet. Add your project URL and anon key in config.js first.', 'error');
+  if (!supabaseClient) {
+    showMessage('Supabase not configured', 'error');
     return;
   }
-  const email = $('admin-email').value.trim();
-  const password = $('admin-password').value.trim();
-  if (!email || !password) {
-    showMessage('Enter your admin email and password first.', 'error');
-    return;
-  }
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  const email = $('admin-email').value;
+  const password = $('admin-password').value;
+
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
   if (error) {
-    showMessage(`Login failed: ${error.message}`, 'error');
-    return;
+    showMessage(error.message, 'error');
+  } else {
+    showMessage('Login successful', 'success');
   }
-  showMessage('Login successful. You can now use the admin forms.', 'success');
 }
 
-async function logoutAdmin() {
-  if (!supabase) return;
-  await supabase.auth.signOut();
-  showMessage('You have been logged out.', 'muted');
-}
-
-function formToObject(form) {
-  const data = new FormData(form);
-  return Object.fromEntries(data.entries());
-}
-
-function castNumericFields(obj, fields) {
-  const copy = { ...obj };
-  fields.forEach((field) => {
-    if (copy[field] !== undefined) copy[field] = Number(copy[field]);
-  });
-  return copy;
-}
-
-async function insertRow(table, row) {
-  if (!supabase) {
-    showMessage('Supabase is not configured yet. Add config.js first.', 'error');
-    return false;
-  }
-  const { error } = await supabase.from(table).insert(row);
-  if (error) {
-    showMessage(`Could not save to ${table}: ${error.message}`, 'error');
-    return false;
-  }
-  return true;
-}
-
-$('refresh-players').addEventListener('click', loadAllData);
-$('run-prediction').addEventListener('click', () => {
-  const homePlayers = selectedPlayers('home-lineup');
-  const awayPlayers = selectedPlayers('away-lineup');
-  const homeName = $('home-team-name').value || 'Team 1';
-  const awayName = $('away-team-name').value || 'Team 2';
-
-  if (!homePlayers.length || !awayPlayers.length) {
-    $('prediction-result').innerHTML = '<strong>Select players for both teams first.</strong>';
-    return;
-  }
-
-  const result = predictMatch(homePlayers, awayPlayers);
-  $('prediction-result').innerHTML = `
-    <strong>${homeName} vs ${awayName}</strong><br>
-    Strength: ${homeName} ${result.homeStrength} · ${awayName} ${result.awayStrength}<br>
-    Probabilities: ${homeName} win ${result.pHome}% · Draw ${result.pDraw}% · ${awayName} win ${result.pAway}%
-  `;
-});
-
-$('fill-practice-lineups').addEventListener('click', autoFillPracticeLineups);
 $('login-btn').addEventListener('click', loginAdmin);
-$('logout-btn').addEventListener('click', logoutAdmin);
-
-$('player-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const row = castNumericFields(formToObject(event.target), ['pace', 'shooting', 'passing', 'dribbling', 'defending', 'physical']);
-  const ok = await insertRow('players', row);
-  if (ok) {
-    event.target.reset();
-    showMessage('Player saved.', 'success');
-    await loadAllData();
-  }
-});
-
-$('practice-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const row = castNumericFields(formToObject(event.target), ['home_score', 'away_score']);
-  const ok = await insertRow('practice_matches', row);
-  if (ok) {
-    event.target.reset();
-    showMessage('Practice match saved.', 'success');
-    await loadAllData();
-  }
-});
-
-$('external-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const row = castNumericFields(formToObject(event.target), ['our_score', 'opponent_score']);
-  const ok = await insertRow('external_matches', row);
-  if (ok) {
-    event.target.reset();
-    showMessage('Club match saved.', 'success');
-    await loadAllData();
-  }
-});
-
-async function init() {
-  await loadAllData();
-  autoFillPracticeLineups();
-
-  if (!supabase) {
-    showMessage('Site is running in demo mode. Create config.js and connect Supabase to enable real data and admin login.', 'muted');
-    updateAuthUI(null);
-    return;
-  }
-
-  const { data } = await supabase.auth.getSession();
-  updateAuthUI(data.session?.user || null);
-
-  supabase.auth.onAuthStateChange((_event, session) => {
-    updateAuthUI(session?.user || null);
-  });
-}
-
-init();
