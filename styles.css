@@ -15,6 +15,38 @@
 html { scroll-behavior: smooth; }
 body { margin: 0; font-family: Inter, Arial, sans-serif; color: var(--text); background: var(--bg); }
 a { color: inherit; }
+.hero {
+  position: relative;
+  min-height: 70vh;
+  background: url('team-photo.jpeg') center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-overlay {
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45); /* dark overlay */
+  display: flex;
+  align-items: center;
+}
+
+.hero-inner {
+  color: white;
+  padding: 40px;
+  max-width: 900px;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.hero .lead {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+}
 .hero { position: relative; overflow: hidden; background: linear-gradient(135deg, #102331, #194661 60%, #256c57); color: white; padding: 54px 20px; }
 .hero-graphic::before, .hero-graphic::after { content: ''; position: absolute; border-radius: 50%; opacity: .16; }
 .hero-graphic::before { width: 360px; height: 360px; background: #fff; right: -90px; top: -120px; }
