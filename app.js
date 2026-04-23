@@ -154,28 +154,40 @@ function enableLineupMoving() {
 }
 
 function renderPlayers(players) {
-  if (exists('players-body')) {
-    $('players-body').innerHTML = players.map((p) => `
-      <tr><td>${p.name}</td><td>${p.position}</td><td>${p.pace}</td><td>${p.shooting}</td><td>${p.passing}</td><td>${p.dribbling}</td><td>${p.defending}</td><td>${p.physical}</td></tr>
-    `).join('');
-  }
-  if (exists('home-lineup') && exists('away-lineup')) {
-    const options = players.map((p, i) => `<option value="${i}">${p.name} (${p.position})</option>`).join('');
-    $('home-lineup').innerHTML = options;
-    $('away-lineup').innerHTML = options;
-    enableLineupMoving();
-  }
-  if (exists('players-count')) $('players-count').textContent = players.length;
-  if (exists('admin-players-list')) {
-    $('admin-players-list').innerHTML = players.map((p) => `
-      <div class="manage-item">
-        <h4>${p.name} <span class="muted">(${p.position})</span></h4>
-        <p>PAC ${p.pace} · SHO ${p.shooting} · PAS ${p.passing}</p>
-        <p>DRI ${p.dribbling} · DEF ${p.defending} · PHY ${p.physical}</p>
-        <div class="item-actions"><button class="btn danger delete-btn" data-table="players" data-id="${p.id}">Delete</button></div>
-      </div>
-    `).join('') || '<p class="muted">No players yet.</p>';
-  }
+  $('players-body').innerHTML = players.map((p) => `
+    <tr>
+      <td>${p.name}</td>
+      <td>${p.position}</td>
+      <td>${p.pace}</td>
+      <td>${p.shooting}</td>
+      <td>${p.passing}</td>
+      <td>${p.dribbling}</td>
+      <td>${p.defending}</td>
+      <td>${p.physical}</td>
+    </tr>
+  `).join('');
+
+  const homeLineup = $('home-lineup');
+  const awayLineup = $('away-lineup');
+
+  homeLineup.innerHTML = '';
+  awayLineup.innerHTML = '';
+
+  players.forEach((p, i) => {
+    const option = document.createElement('option');
+    option.value = i;
+    option.textContent = `${p.name} (${p.position})`;
+
+    if (i % 2 === 0) {
+      homeLineup.appendChild(option);
+    } else {
+      awayLineup.appendChild(option);
+    }
+  });
+
+  $('players-count').textContent = players.length;
+
+  enableLineupMoving();
 }
 
 function renderPractice(matches) {
@@ -197,6 +209,25 @@ function renderPractice(matches) {
       </div>
     `).join('') || '<p class="muted">No practice matches yet.</p>';
   }
+}
+
+function enableLineupMoving() {
+  const home = $('home-lineup');
+  const away = $('away-lineup');
+
+  if (!home || !away) return;
+
+  home.ondblclick = function () {
+    Array.from(home.selectedOptions).forEach((option) => {
+      away.appendChild(option);
+    });
+  };
+
+  away.ondblclick = function () {
+    Array.from(away.selectedOptions).forEach((option) => {
+      home.appendChild(option);
+    });
+  };
 }
 
 function renderExternal(matches) {
@@ -240,8 +271,13 @@ async function loadAllData() {
 }
 
 function selectedPlayers(selectId) {
-  if (!exists(selectId)) return [];
-  return Array.from($(selectId).selectedOptions).map((option) => playersCache[Number(option.value)]).filter(Boolean);
+  const select = $(selectId);
+
+  if (!select) return [];
+
+  return Array.from(select.options)
+    .map((option) => playersCache[Number(option.value)])
+    .filter(Boolean);
 }
 
 function autoFillPracticeLineups() {
