@@ -374,21 +374,46 @@ function renderPractice(matches) {
 }
 
 function renderExternal(matches) {
-  const sorted = sortByDateDesc(matches);
+  const sorted = sortByDateDesc(matches, 'match_date');
+
+  const getDate = (m) => m.match_date || m.date || '';
+  const getOpponent = (m) => m.opponent_name || m.opponent || '';
+  const getOpponentScore = (m) => 
+    m.opponent_score !== undefined && m.opponent_score !== null
+      ? m.opponent_score
+      : m.their_score;
+  const getOurScore = (m) => m.our_score;
+  const getVenue = (m) => m.venue || '';
+  const getCompetition = (m) => m.competition || '';
+
   if (exists('external-body')) {
     $('external-body').innerHTML = sorted.map((m) => `
-      <tr><td>${m.match_date}</td><td>${m.opponent_name}</td><td>${m.venue}</td><td>${m.our_score} - ${m.opponent_score}</td><td>${m.competition || ''}</td></tr>
+      <tr>
+        <td>${getDate(m)}</td>
+        <td>${getOpponent(m)}</td>
+        <td>${getVenue(m)}</td>
+        <td>${getOurScore(m)} - ${getOpponentScore(m)}</td>
+        <td>${getCompetition(m)}</td>
+      </tr>
     `).join('');
   }
+
   if (exists('external-count')) $('external-count').textContent = sorted.length;
   if (exists('hero-external-count')) $('hero-external-count').textContent = sorted.length;
+
   if (exists('admin-external-list')) {
     $('admin-external-list').innerHTML = sorted.map((m) => `
       <div class="manage-item">
-        <h4>Associació Futbol Veterans la Devesa ${m.our_score}-${m.opponent_score} ${m.opponent_name}</h4>
-        <p>${m.match_date} · ${m.venue}</p>
-        <p>${m.competition || ''}</p>
-        <div class="item-actions"><button class="btn danger delete-btn" data-table="external_matches" data-id="${m.id}">${txt('deleteText')}</button></div>
+        <h4>Associació Futbol Veterans la Devesa ${getOurScore(m)}-${getOpponentScore(m)} ${getOpponent(m)}</h4>
+        <p>${getDate(m)}${getVenue(m) ? ' · ' + getVenue(m) : ''}</p>
+        <p>${getCompetition(m)}</p>
+        <div class="item-actions">
+          <button class="btn danger delete-btn"
+                  data-table="external_matches"
+                  data-id="${m.id}">
+            ${txt('deleteText')}
+          </button>
+        </div>
       </div>
     `).join('') || `<p class="muted">${txt('noClub')}</p>`;
   }
