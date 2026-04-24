@@ -100,6 +100,7 @@ let externalCache = [...localExternalMatches];
 const $ = (id) => document.getElementById(id);
 const exists = (id) => Boolean($(id));
 const isAdminPage = exists('admin-panels');
+const playerKey = (player) => String(player?.id ?? player?.name ?? '');
 
 function showMessage(text, type = 'muted') {
   const box = $('admin-message');
@@ -197,116 +198,123 @@ function predictMatch(homePlayers, awayPlayers) {
 
 function sortByDateDesc(items, key = 'match_date') { return [...items].sort((a, b) => new Date(b[key]) - new Date(a[key])); }
 
-function enableLineupMoving() {
-  const home = $('home-lineup');
-  const away = $('away-lineup');
-
-  if (!home || !away) return;
-
-  home.ondblclick = () => {
-    Array.from(home.selectedOptions).forEach(option => away.appendChild(option));
-  };
-
-  away.ondblclick = () => {
-    Array.from(away.selectedOptions).forEach(option => home.appendChild(option));
-  };
-}
-
-function renderPlayers(players) {
-  $('players-body').innerHTML = players.map((p) => `
-    <tr>
-      <td>${p.name}</td>
-      <td>${p.position}</td>
-      <td>${p.pace}</td>
-      <td>${p.shooting}</td>
-      <td>${p.passing}</td>
-      <td>${p.dribbling}</td>
-      <td>${p.defending}</td>
-      <td>${p.physical}</td>
-    </tr>
-  `).join('');
-
+function splitPlayersEvenly(players) {
   homeTeam = [];
   awayTeam = [];
-
   players.forEach((p, i) => {
     if (i % 2 === 0) homeTeam.push(p);
     else awayTeam.push(p);
   });
+}
 
-  renderLineups();
-  $('players-count').textContent = players.length;
+function renderPlayers(players) {
+  if (exists('players-body')) {
+    $('players-body').innerHTML = players.map((p) => `
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.position}</td>
+        <td>${p.pace}</td>
+        <td>${p.shooting}</td>
+        <td>${p.passing}</td>
+        <td>${p.dribbling}</td>
+        <td>${p.defending}</td>
+        <td>${p.physical}</td>
+      </tr>
+    `).join('');
+  }
+
+  if (exists('home-lineup') && exists('away-lineup')) {
+    splitPlayersEvenly(players);
+    renderLineups();
+  }
+
+  if (exists('players-count')) $('players-count').textContent = players.length;
+
+  if (exists('admin-players-list')) {
+    $('admin-players-list').innerHTML = players.map((p) => `
+      <div class="manage-item">
+        <h4>${p.name} (${p.position})</h4>
+        <p>PAC ${p.pace} · SHO ${p.shooting} · PAS ${p.passing} · DRI ${p.dribbling} · DEF ${p.defending} · PHY ${p.physical}</p>
+        <div class="item-actions"><button class="btn danger delete-btn" data-table="players" data-id="${p.id}">${txt('deleteText')}</button></div>
+      </div>
+    `).join('') || `<p class="muted">${txt('noPlayers')}</p>`;
+  }
 }
 
 function renderLineups() {
   const homeBox = $('home-lineup');
   const awayBox = $('away-lineup');
+  if (!homeBox || !awayBox) return;
 
   homeBox.innerHTML = '';
   awayBox.innerHTML = '';
 
-  homeTeam.forEach(player => {
-    homeBox.appendChild(createPlayerCard(player));
-  });
+  homeTeam.forEach(player => homeBox.appendChild(createPlayerCard(player)));
+  awayTeam.forEach(player => awayBox.appendChild(createPlayerCard(player)));
 
-  awayTeam.forEach(player => {
-    awayBox.appendChild(createPlayerCard(player));
-  });
-
-  enableDragAndDrop();
+  setupDropZone('home-lineup');
+  setupDropZone('away-lineup');
 }
 
 function createPlayerCard(player) {
   const div = document.createElement('div');
   div.className = 'player-card';
   div.draggable = true;
-  div.dataset.id = player.id;
-
+  div.dataset.id = playerKey(player);
   div.textContent = `${player.name} (${player.position})`;
+
+  div.addEventListener('dragstart', (event) => {
+    event.dataTransfer.setData('text/plain', div.dataset.id);
+    event.dataTransfer.effectAllowed = 'move';
+    div.classList.add('dragging');
+  });
+
+  div.addEventListener('dragend', () => {
+    div.classList.remove('dragging');
+  });
 
   return div;
 }
 
-function enableDragAndDrop() {
-  document.querySelectorAll('.player-card').forEach(card => {
-    card.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', card.dataset.id);
-    });
-  });
+function setupDropZone(boxId) {
+  const box = $(boxId);
+  if (!box) return;
 
-  ['home-lineup', 'away-lineup'].forEach(id => {
-    const box = $(id);
+  box.ondragover = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    box.classList.add('drag-over');
+  };
 
-    box.addEventListener('dragover', (e) => {
-      e.preventDefault(); // REQUIRED
-    });
+  box.ondragenter = (event) => {
+    event.preventDefault();
+    box.classList.add('drag-over');
+  };
 
-    box.addEventListener('drop', (e) => {
-      e.preventDefault();
+  box.ondragleave = (event) => {
+    if (!box.contains(event.relatedTarget)) box.classList.remove('drag-over');
+  };
 
-      const playerId = Number(e.dataTransfer.getData('text/plain'));
-
-      movePlayer(playerId, id);
-    });
-  });
+  box.ondrop = (event) => {
+    event.preventDefault();
+    box.classList.remove('drag-over');
+    const draggedId = event.dataTransfer.getData('text/plain');
+    movePlayer(draggedId, boxId);
+  };
 }
 
-function movePlayer(playerId, targetBoxId) {
-  const player = playersCache.find(p => p.id === playerId);
+function movePlayer(id, targetBoxId) {
+  const draggedId = String(id);
+  const player = playersCache.find(p => playerKey(p) === draggedId);
   if (!player) return;
 
-  // remove from both teams
-  homeTeam = homeTeam.filter(p => p.id !== playerId);
-  awayTeam = awayTeam.filter(p => p.id !== playerId);
+  homeTeam = homeTeam.filter(p => playerKey(p) !== draggedId);
+  awayTeam = awayTeam.filter(p => playerKey(p) !== draggedId);
 
-  // add to target team
-  if (targetBoxId === 'home-lineup') {
-    homeTeam.push(player);
-  } else {
-    awayTeam.push(player);
-  }
+  if (targetBoxId === 'home-lineup') homeTeam.push(player);
+  if (targetBoxId === 'away-lineup') awayTeam.push(player);
 
-  renderLineups(); // re-render UI
+  renderLineups();
 }
 
 function renderPractice(matches) {
@@ -328,25 +336,6 @@ function renderPractice(matches) {
       </div>
     `).join('') || `<p class="muted">${txt('noPractice')}</p>`;
   }
-}
-
-function enableLineupMoving() {
-  const home = $('home-lineup');
-  const away = $('away-lineup');
-
-  if (!home || !away) return;
-
-  home.ondblclick = function () {
-    Array.from(home.selectedOptions).forEach((option) => {
-      away.appendChild(option);
-    });
-  };
-
-  away.ondblclick = function () {
-    Array.from(away.selectedOptions).forEach((option) => {
-      home.appendChild(option);
-    });
-  };
 }
 
 function renderExternal(matches) {
@@ -395,9 +384,8 @@ function selectedPlayers(selectId) {
 
 function autoFillPracticeLineups() {
   if (!exists('home-lineup') || !exists('away-lineup')) return;
-  const half = Math.ceil(playersCache.length / 2);
-  Array.from($('home-lineup').options).forEach((option, idx) => { option.selected = idx < half; });
-  Array.from($('away-lineup').options).forEach((option, idx) => { option.selected = idx >= half; });
+  splitPlayersEvenly(playersCache);
+  renderLineups();
 }
 
 async function loginAdmin() {
