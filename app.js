@@ -103,9 +103,35 @@ const i18n = {
 };
 const txt = (key) => (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
 
-const config = window.APP_CONFIG || {};
-const hasSupabaseConfig = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes('YOUR_PROJECT'));
-const supabaseClient = hasSupabaseConfig ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
+function getSupabaseConfig() {
+  const cfg = window.APP_CONFIG || window.SUPABASE_CONFIG || {};
+  const url = String(
+    cfg.SUPABASE_URL ||
+    cfg.supabaseUrl ||
+    window.SUPABASE_URL ||
+    ''
+  ).trim();
+  const key = String(
+    cfg.SUPABASE_ANON_KEY ||
+    cfg.SUPABASE_KEY ||
+    cfg.supabaseAnonKey ||
+    window.SUPABASE_ANON_KEY ||
+    window.SUPABASE_KEY ||
+    ''
+  ).trim();
+  return { url, key };
+}
+
+const supabaseConfig = getSupabaseConfig();
+const hasSupabaseConfig = Boolean(
+  supabaseConfig.url &&
+  supabaseConfig.key &&
+  !supabaseConfig.url.includes('YOUR_PROJECT') &&
+  !supabaseConfig.key.includes('YOUR_ANON_KEY')
+);
+const supabaseClient = (hasSupabaseConfig && window.supabase)
+  ? window.supabase.createClient(supabaseConfig.url, supabaseConfig.key)
+  : null;
 
 let playersCache = [...localPlayers];
 let homeTeam = [];
