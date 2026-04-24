@@ -3,12 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Verterans de la Devesa · Administración</title>
-  <meta name="description" content="Área de administración de Verterans de la Devesa." />
+  <title>Associació Futbol Veterans la Devesa · Administración</title>
+  <meta name="description" content="Área de administración de Associació Futbol Veterans la Devesa." />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="admin-page-body">
+  <nav class="language-toggle" aria-label="Selector de idioma">
+    <span class="language-toggle-label">Idioma / Language</span>
+    <a class="active" href="admin.html" lang="es">ES</a>
+    <a href="admin-en.html" lang="en">EN</a>
+  </nav>
   <header class="admin-topbar">
     <div class="container admin-topbar-inner">
       <div>
@@ -17,7 +22,6 @@
       </div>
       <div class="cta-row">
         <a href="index.html" class="btn secondary">Volver a la página principal</a>
-        <span class="language-switch dark"><a class="active" href="admin.html">ES</a><a href="admin-en.html">EN</a></span>
         <span class="admin-status" id="auth-status">Sesión no iniciada</span>
       </div>
     </div>

@@ -1,4 +1,4 @@
-# Verterans de la Devesa — versión bilingüe
+# Associació Futbol Veterans la Devesa — versión bilingüe
 
 Idioma por defecto: español.
 

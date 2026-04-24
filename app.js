@@ -361,7 +361,7 @@ function renderExternal(matches) {
   if (exists('admin-external-list')) {
     $('admin-external-list').innerHTML = sorted.map((m) => `
       <div class="manage-item">
-        <h4>VdlD ${m.our_score}-${m.opponent_score} ${m.opponent_name}</h4>
+        <h4>Associació Futbol Veterans la Devesa ${m.our_score}-${m.opponent_score} ${m.opponent_name}</h4>
         <p>${m.match_date} · ${m.venue}</p>
         <p>${m.competition || ''}</p>
         <div class="item-actions"><button class="btn danger delete-btn" data-table="external_matches" data-id="${m.id}">${txt('deleteText')}</button></div>
@@ -371,7 +371,7 @@ function renderExternal(matches) {
 }
 
 function updateSummaryCards() {
-  const all = [...practiceCache.map((m) => ({ date: m.match_date, text: `${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}` })), ...externalCache.map((m) => ({ date: m.match_date, text: `VdlD ${m.our_score}-${m.opponent_score} ${m.opponent_name}` }))].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const all = [...practiceCache.map((m) => ({ date: m.match_date, text: `${m.home_team} ${m.home_score}-${m.away_score} ${m.away_team}` })), ...externalCache.map((m) => ({ date: m.match_date, text: `Associació Futbol Veterans la Devesa ${m.our_score}-${m.opponent_score} ${m.opponent_name}` }))].sort((a, b) => new Date(b.date) - new Date(a.date));
   if (exists('latest-result')) $('latest-result').textContent = all.length ? all[0].text : '-';
 }
 

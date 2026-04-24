@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Verterans de la Devesa · Admin</title>
-  <meta name="description" content="Admin area for Verterans de la Devesa." />
+  <title>Associació Futbol Veterans la Devesa · Admin</title>
+  <meta name="description" content="Admin area for Associació Futbol Veterans la Devesa." />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="admin-page-body">
-<div class="lang-toggle">
-<a href="admin-en.html">EN</a>
-<span>|</span>
-<a href="admin.html">ES</a>
-</div>
+  <nav class="language-toggle" aria-label="Language selector">
+    <span class="language-toggle-label">Language / Idioma</span>
+    <a href="admin.html" lang="es">ES</a>
+    <a class="active" href="admin-en.html" lang="en">EN</a>
+  </nav>
   <header class="admin-topbar">
     <div class="container admin-topbar-inner">
       <div>
@@ -22,7 +22,6 @@
       </div>
       <div class="cta-row">
         <a href="index-en.html" class="btn secondary">Back to main page</a>
-        <span class="language-switch dark"><a href="admin.html">ES</a><a class="active" href="admin-en.html">EN</a></span>
         <span class="admin-status" id="auth-status">Not signed in</span>
       </div>
     </div>

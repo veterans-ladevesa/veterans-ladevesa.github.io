@@ -4,27 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Associació Futbol Veterans la Devesa</title>
-  <meta name="description" content="Official club page for Verterans de la Devesa: squad, match history, and a simple player-based match predictor." />
+  <meta name="description" content="Official club page for Associació Futbol Veterans la Devesa: squad, match history, and a simple player-based match predictor." />
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="public-page">
-<div class="lang-toggle">
-<a href="index-en.html">EN</a>
-<span>|</span>
-<a href="index.html">ES</a>
-</div>  
-<div class="lang-toggle">
-<a href="admin-en.html">EN</a>
-<span>|</span>
-<a href="admin.html">ES</a>
-</div>
+  <nav class="language-toggle" aria-label="Language selector">
+    <span class="language-toggle-label">Language / Idioma</span>
+    <a href="index.html" lang="es">ES</a>
+    <a class="active" href="index-en.html" lang="en">EN</a>
+  </nav>
 <header class="hero">
   <div class="hero-overlay">
     <div class="hero-inner">
       <div class="hero-text">
-        <p class="eyebrow">Associació Futbol</p>
-        <h1>Verterans la Devesa</h1>
+        <p class="eyebrow">Veterans football club</p>
+        <h1>Associació Futbol Veterans la Devesa</h1>
         <p class="lead">
           Match history, squad management, and performance insights for our club.
         </p>
@@ -32,12 +27,11 @@
           <a href="#results" class="btn primary">See Results</a>
           <a href="#predictor" class="btn secondary">Try Predictor</a>
           <a href="admin-en.html" class="btn ghost">Admin Area</a>
-          <span class="language-switch"><a href="index.html">ES</a><a class="active" href="index-en.html">EN</a></span>
         </div>
       </div>
 
       <div class="hero-logo">
-        <img src="logo-placeholder.jpeg" alt="Club logo">
+        <img src="logo-placeholder.jpeg" alt="Club badge">
       </div>
     </div>
   </div>
@@ -192,7 +186,7 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>Verterans de la Devesa · Public site</p>
+      <p>Associació Futbol Veterans la Devesa · Public site</p>
       <span><a href="admin-en.html" class="footer-link">Open admin page</a> · <a href="index.html" class="footer-link">Español</a></span>
     </div>
   </footer>
