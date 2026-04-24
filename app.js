@@ -211,46 +211,45 @@ function createPlayerCard(player) {
 }
 
 function enableDragAndDrop() {
-  const players = document.querySelectorAll('.player-card');
-
-  players.forEach(player => {
-    player.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('playerId', player.dataset.id);
+  document.querySelectorAll('.player-card').forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', card.dataset.id);
     });
   });
 
   ['home-lineup', 'away-lineup'].forEach(id => {
     const box = $(id);
 
-    box.addEventListener('dragover', e => {
-      e.preventDefault();
+    box.addEventListener('dragover', (e) => {
+      e.preventDefault(); // REQUIRED
     });
 
-    box.addEventListener('drop', e => {
+    box.addEventListener('drop', (e) => {
       e.preventDefault();
-      const playerId = Number(e.dataTransfer.getData('playerId'));
+
+      const playerId = Number(e.dataTransfer.getData('text/plain'));
 
       movePlayer(playerId, id);
     });
   });
 }
 
-function movePlayer(playerId, targetTeam) {
+function movePlayer(playerId, targetBoxId) {
   const player = playersCache.find(p => p.id === playerId);
   if (!player) return;
 
-  // remove from both teams first
+  // remove from both teams
   homeTeam = homeTeam.filter(p => p.id !== playerId);
   awayTeam = awayTeam.filter(p => p.id !== playerId);
 
-  // add to target
-  if (targetTeam === 'home-lineup') {
+  // add to target team
+  if (targetBoxId === 'home-lineup') {
     homeTeam.push(player);
   } else {
     awayTeam.push(player);
   }
 
-  renderLineups();
+  renderLineups(); // re-render UI
 }
 
 function renderPractice(matches) {
