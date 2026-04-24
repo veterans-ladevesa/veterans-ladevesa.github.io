@@ -99,6 +99,20 @@ const i18n = {
 };
 const txt = (key) => (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
 
+function practiceDisplayNames() {
+  return currentLang === 'es'
+    ? { home: 'Naranja', away: 'Verde' }
+    : { home: 'Orange', away: 'Green' };
+}
+
+function practiceHomeScore(match) {
+  return match.home_score ?? match.orange_score ?? 0;
+}
+
+function practiceAwayScore(match) {
+  return match.away_score ?? match.green_score ?? 0;
+}
+
 const config = window.APP_CONFIG || {};
 const hasSupabaseConfig = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes('YOUR_PROJECT'));
 const supabaseClient = hasSupabaseConfig ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_ANON_KEY) : null;
@@ -328,17 +342,21 @@ function movePlayer(id, targetBoxId) {
 
 function renderPractice(matches) {
   const sorted = sortByDateDesc(matches);
+  const names = practiceDisplayNames();
+
   if (exists('practice-body')) {
     $('practice-body').innerHTML = sorted.map((m) => `
-      <tr><td>${m.match_date}</td><td>Orange</td><td>${m.home_score} - ${m.away_score}</td><td>Green</td><td>${m.notes || ''}</td></tr>
+      <tr><td>${m.match_date}</td><td>${names.home}</td><td>${practiceHomeScore(m)} - ${practiceAwayScore(m)}</td><td>${names.away}</td><td>${m.notes || ''}</td></tr>
     `).join('');
   }
+
   if (exists('practice-count')) $('practice-count').textContent = sorted.length;
   if (exists('hero-practice-count')) $('hero-practice-count').textContent = sorted.length;
+
   if (exists('admin-practice-list')) {
     $('admin-practice-list').innerHTML = sorted.map((m) => `
       <div class="manage-item">
-        <h4>Orange ${m.home_score}-${m.away_score} Green</h4>
+        <h4>${names.home} ${practiceHomeScore(m)}-${practiceAwayScore(m)} ${names.away}</h4>
         <p>${m.match_date}</p>
         <p>${m.notes || ''}</p>
         <div class="item-actions"><button class="btn danger delete-btn" data-table="practice_matches" data-id="${m.id}">${txt('deleteText')}</button></div>
@@ -405,7 +423,18 @@ function renderScorersChart(scorers) {
 }
 
 function updateSummaryCards() {
-  const all = [...practiceCache.map((m) => ({ date: m.match_date, text: `Orange ${m.home_score}-${m.away_score} Green` })), ...externalCache.map((m) => ({ date: m.match_date, text: `Associació Futbol Veterans la Devesa ${m.our_score}-${m.opponent_score} ${m.opponent_name}` }))].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const names = practiceDisplayNames();
+  const all = [
+    ...practiceCache.map((m) => ({
+      date: m.match_date,
+      text: `${names.home} ${practiceHomeScore(m)}-${practiceAwayScore(m)} ${names.away}`
+    })),
+    ...externalCache.map((m) => ({
+      date: m.match_date,
+      text: `Associació Futbol Veterans la Devesa ${m.our_score}-${m.opponent_score} ${m.opponent_name}`
+    }))
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
   if (exists('latest-result')) $('latest-result').textContent = all.length ? all[0].text : '-';
 }
 
@@ -605,19 +634,22 @@ function bindEvents() {
   if (exists('practice-form')) $('practice-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const raw = formToObject(event.target);
+    const goalScorersText = raw.goal_scorers || '';
+
     const row = castNumericFields({
-      match_date: raw.match_date || raw.date,
+      match_date: raw.match_date,
       home_team: 'Orange',
       away_team: 'Green',
       home_score: raw.home_score,
       away_score: raw.away_score,
-      notes: raw.notes
-    }, ['home_score','away_score']);
-    const ok = await insertRow('practice_matches', row);
-    if (ok) {
-      // optional goal scorers handling if implemented elsewhere
+      notes: raw.notes || ''
+    }, ['home_score', 'away_score']);
+
+    const insertedMatch = await insertRowReturning('practice_matches', row);
+    if (insertedMatch) {
+      await saveGoalScorers('practice', insertedMatch.id, goalScorersText);
       event.target.reset();
-      showMessage(currentLang==='es' ? 'Partido de entrenamiento guardado.' : 'Training match saved.', 'success');
+      showMessage(txt('practiceSaved'), 'success');
       await loadAllData();
     }
   });

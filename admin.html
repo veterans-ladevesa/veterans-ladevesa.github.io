@@ -85,15 +85,12 @@
 
         <form id="practice-form" class="card inset-card">
           <h3>Añadir partido de entrenamiento</h3>
+          <p class="muted small-text">Partido interno fijo: Naranja vs Verde.</p>
           <label>Fecha</label>
           <input name="match_date" type="date" required />
-          <label>Equipo local</label>
-          <input name="home_team" style="display:none" value="Orange" value="Orange" required />
-          <label>Equipo visitante</label>
-          <input name="away_team" style="display:none" value="Green" value="Green" required />
           <div class="mini-grid two-col">
-            <div><label>Goles Verde</label><input name="green_score" type="number" min="0" required /></div>
-            <div><label>Goles Naranja</label><input name="orange_score" type="number" min="0" required /></div>
+            <div><label>Goles Naranja</label><input name="home_score" type="number" min="0" required /></div>
+            <div><label>Goles Verde</label><input name="away_score" type="number" min="0" required /></div>
           </div>
           <label>Notas</label>
           <input name="notes" placeholder="Partido interno amistoso" />
