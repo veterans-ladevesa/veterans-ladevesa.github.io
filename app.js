@@ -102,6 +102,24 @@ const i18n = {
   }
 };
 const txt = (key) => (i18n[currentLang] && i18n[currentLang][key]) || i18n.en[key] || key;
+const positionName = (pos) => {
+  if (currentLang !== 'es') return pos;
+
+  const labels = {
+    GK: 'Portero (POR)',
+    CB: 'Defensa Central (DFC)',
+    LB: 'Lateral Izquierdo (LI)',
+    RB: 'Lateral Derecho (LD)',
+    CDM: 'Mediocentro Defensivo (MCD)',
+    CM: 'Mediocentro (MC)',
+    CAM: 'Mediocentro Ofensivo (MCO)',
+    LW: 'Extremo Izquierdo (EI)',
+    RW: 'Extremo Derecho (ED)',
+    ST: 'Delantero Centro (DC)'
+  };
+
+  return labels[pos] || pos;
+};
 
 const config = window.APP_CONFIG || {};
 const hasSupabaseConfig = Boolean(config.SUPABASE_URL && config.SUPABASE_ANON_KEY && !config.SUPABASE_URL.includes('YOUR_PROJECT'));
@@ -225,7 +243,7 @@ function renderPlayers(players) {
     $('players-body').innerHTML = players.map((p) => `
       <tr>
         <td>${p.name}</td>
-        <td>${p.position}</td>
+        <td>${positionName(p.position)}</td>
         <td>${p.pace}</td>
         <td>${p.shooting}</td>
         <td>${p.passing}</td>
@@ -246,7 +264,7 @@ function renderPlayers(players) {
   if (exists('admin-players-list')) {
     $('admin-players-list').innerHTML = players.map((p) => `
       <div class="manage-item">
-        <h4>${p.name} (${p.position})</h4>
+        <h4>${p.name} (${positionName(p.position)})</h4>
         <p>PAC ${p.pace} · SHO ${p.shooting} · PAS ${p.passing} · DRI ${p.dribbling} · DEF ${p.defending} · PHY ${p.physical}</p>
         <div class="item-actions"><button class="btn danger delete-btn" data-table="players" data-id="${p.id}">${txt('deleteText')}</button></div>
       </div>
@@ -274,7 +292,7 @@ function createPlayerCard(player) {
   div.className = 'player-card';
   div.draggable = true;
   div.dataset.id = playerKey(player);
-  div.textContent = `${player.name} (${player.position})`;
+  div.textContent = `${player.name} (${positionName(player.position)})`;
 
   div.addEventListener('dragstart', (event) => {
     event.dataTransfer.setData('text/plain', div.dataset.id);
